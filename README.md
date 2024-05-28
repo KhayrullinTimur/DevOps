@@ -1,5 +1,4 @@
-# DevOps
-DevOps homework
+# DevOps homework
 
 # HW1
 1. Для начала нужно файлу дать права на выполнение: chmod +x hw1.sh
