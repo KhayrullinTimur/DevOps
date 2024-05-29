@@ -1,0 +1,56 @@
+---
+- name: Setup user with SSH key authentication
+  hosts: all
+  become: yes
+  vars:
+    username: newuser
+    ssh_key: "{{ lookup('file', '/home/goku/.ssh/id_rsa.pub') }}"
+  tasks:
+    - name: Create a new user
+      user:
+        name: "{{ username }}"
+        state: present
+        create_home: yes
+
+    - name: Create .ssh directory
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Add authorized key for the user
+      authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ ssh_key }}"
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+        create: yes
+      notify: Restart SSH
+
+    - name: Ensure /opt directory exists
+      file:
+        path: /opt
+        state: directory
+        mode: '0755'
+
+    - name: Create a directory in /opt with user ownership
+      file:
+        path: "/opt/{{ username }}"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0755'
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
