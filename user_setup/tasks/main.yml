@@ -1,0 +1,48 @@
+---
+- name: Ensure users are created
+  user:
+    name: "{{ item.name }}"
+    state: present
+    create_home: yes
+  loop: "{{ users }}"
+
+- name: Ensure .ssh directory is created
+  file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: '0700'
+  loop: "{{ users }}"
+
+- name: Add authorized key for users
+  authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ item.ssh_key }}"
+  loop: "{{ users }}"
+
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+    create: yes
+  notify: Restart SSH
+
+- name: Ensure /opt directory exists
+  file:
+    path: /opt
+    state: directory
+    mode: '0755'
+
+- name: Create directories in /opt with user ownership
+  file:
+    path: "/opt/{{ item.name }}"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: '0755'
+  loop: "{{ users }}"
+

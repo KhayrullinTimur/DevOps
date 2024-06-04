@@ -1,0 +1,22 @@
+---
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Check if users are created
+      command: id user1
+      register: user1_result
+      ignore_errors: yes
+    - name: Assert user1 exists
+      assert:
+        that:
+          - user1_result.rc == 0
+
+    - name: Check if directories are created
+      file:
+        path: /opt/user1
+        state: directory
+      register: user1_opt_dir
+    - name: Assert /opt/user1 exists
+      assert:
+        that:
+          - user1_opt_dir.state == "directory"
